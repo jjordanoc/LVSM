@@ -69,7 +69,7 @@ def process_torch_file(file_path, output_dir):
             num_images = len(cur_scene['images'])
             
             # Process each element in the list
-            for img_idx, img_data in enumerate(cur_scene['images']):
+            for img_idx, img_data in enumerate(cur_scene['images']): # need 'images' in MOCHI
                 try:
                     # Convert tensor to numpy if needed
                     if isinstance(img_data, torch.Tensor):
@@ -89,7 +89,9 @@ def process_torch_file(file_path, output_dir):
                         raise ValueError(f"Failed to write image to {img_path}")
                     
                     # Convert pose info tensors to regular Python types if needed
-                    pose_data = cur_pose_info[img_idx]
+
+                    # Input intrinsics and extrinsics
+                    pose_data = cur_pose_info[img_idx] # where do i get this for MOCHI? -> estimate it
                     if isinstance(pose_data, torch.Tensor):
                         pose_data = pose_data.tolist()
                     

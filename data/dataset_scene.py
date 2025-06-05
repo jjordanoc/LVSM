@@ -36,7 +36,7 @@ class Dataset(Dataset):
                     with open(self.config.inference.view_idx_file_path, 'r') as f:
                         self.view_idx_list = json.load(f)
                         # filter out None values, i.e. scenes that don't have specified input and targetviews
-                        self.view_idx_list_filtered = [k for k, v in self.view_idx_list.items() if v is not None]
+                        self.view_idx_list_filtered = [k for k, v in self.view_idx_list.items() if v is not None] # discard scenes that don't have specified input and target views (WE NEED TO ADD THIS FOR MOCHI)
                     filtered_scene_paths = []
                     for scene in self.all_scene_paths:
                         file_name = scene.split("/")[-1]
@@ -131,12 +131,16 @@ class Dataset(Dataset):
         return in_c2ws
 
     def view_selector(self, frames):
+        """
+        Sample a few frames from the scene
+        Return the indices of the sampled frames
+        """
         if len(frames) < self.config.training.num_views:
             return None
         # sample view candidates
         view_selector_config = self.config.training.view_selector
         min_frame_dist = view_selector_config.get("min_frame_dist", 25)
-        max_frame_dist = min(len(frames) - 1, view_selector_config.get("max_frame_dist", 100))
+        max_frame_dist = min(len(frames) - 1, view_selector_config.get("max_frame_dist", 100)) # units?
         if max_frame_dist <= min_frame_dist:
             return None
         frame_dist = random.randint(min_frame_dist, max_frame_dist)
@@ -150,7 +154,7 @@ class Dataset(Dataset):
 
     def __getitem__(self, idx):
         # try:
-        scene_path = self.all_scene_paths[idx].strip()
+        scene_path = self.all_scene_paths[idx].strip() # where the scenes are used
         data_json = json.load(open(scene_path, 'r'))
         frames = data_json["frames"]
         scene_name = data_json["scene_name"]
@@ -160,7 +164,7 @@ class Dataset(Dataset):
             image_indices= current_view_idx["context"] + current_view_idx["target"]
         else:
             # sample input and target views
-            image_indices = self.view_selector(frames)
+            image_indices = self.view_selector(frames) # if not inference, we sample the views
             if image_indices is None:
                 return self.__getitem__(random.randint(0, len(self) - 1))
         image_paths_chosen = [frames[ic]["image_path"] for ic in image_indices]
